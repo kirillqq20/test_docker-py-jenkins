@@ -1,0 +1,58 @@
+pipeline {
+    agent any
+
+    stages {
+        stage ('Docker version') {
+            steps {
+                sh "echo $USER"
+                sh 'docker version'
+            }
+        }
+        
+        stage ('Delete workspase before build starts') {
+            steps {
+                echo 'Deleting workspace'
+                deleteDir()
+            }
+        }
+
+        stage ('Checkout') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/kirillqq20/test_docker-py-jenkins.git'   
+            }
+        }
+        
+        stage ('Test') {
+            steps {
+                dir ('cod') {
+                    sh 'pwd'
+                    sh 'ls -la'
+                }
+            }
+        }
+        
+        stage ('Build Docker images') {
+            steps {
+                dir ('cod') {
+                    sh 'docker build -t kirillqq20/mypython:0.4 .'
+                }
+            }
+        }
+
+        stage ('Docker push') {
+            steps {
+                withDockerRegistry(credentialsId: 'Docker-hub-kirillqq20', url: 'https://index.docker.io/v1/'){
+                    sh '''
+                        docker push kirillqq20/mypython:0.4
+                     '''
+                }
+            }
+        }
+        stage ('Docker delete images') {
+            steps {
+                sh 'docker rmi kirillqq20/mypython:0.4 '
+            }
+        }
+    }
+}
